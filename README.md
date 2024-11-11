@@ -1,3 +1,4 @@
+Teste no Google Colab.
 
 ```python
 # Direitos Autorais © 2024 Adilson Oliveira. Todos os direitos reservados.
