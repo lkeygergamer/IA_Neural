@@ -155,3 +155,177 @@ Este projeto é a personificação da inovação genuína, desenvolvido com prec
 
 Assinatura: Adilson Oliveira 
 
+
+
+PART 2  DEPOIS EU OGANIZO TUDO .....   RESTRUTURA
+
+
+Versão aprimorada e otimizada do código, mantendo a essência e a estrutura original, mas com melhorias na legibilidade, eficiência e boas práticas de programação. Além disso, adicionei comentários explicativos para facilitar o entendimento e a manutenção do código.
+
+```python
+# Direitos Autorais © 2024 Adilson Oliveira. Todos os direitos reservados.
+# Este código é propriedade intelectual de Adilson Oliveira, sendo proibido
+# qualquer uso, modificação ou redistribuição sem autorização explícita do autor.
+# Este código foi desenvolvido sem dependência de bibliotecas de terceiros.
+
+# Conectar ao Google Drive
+from google.colab import drive
+drive.mount('/content/drive')
+
+# Criar pasta para salvar os arquivos
+import os
+save_path = '/content/drive/MyDrive/IA_NeuralNetwork'
+os.makedirs(save_path, exist_ok=True)
+
+# Propriedade Intelectual de Adilson Oliveira.
+
+# Funções matemáticas básicas
+def matmul(A, B):
+    """Multiplicação de matrizes."""
+    return [[sum(a * b for a, b in zip(row_A, col_B)) for col_B in zip(*B)] for row_A in A]
+
+def exp(x):
+    """Aproximação da função exponencial usando série de Taylor."""
+    n_terms = 10  # Número de termos na série de Taylor
+    result = 1.0
+    term = 1.0
+    for i in range(1, n_terms):
+        term *= x / i
+        result += term
+    return result
+
+def transpose(matrix):
+    """Transposição de matriz."""
+    return list(map(list, zip(*matrix)))
+
+# Funções de ativação
+class ActivationFunctions:
+    @staticmethod
+    def sigmoid(x):
+        """Função de ativação sigmoide."""
+        return 1 / (1 + exp(-x))
+
+    @staticmethod
+    def sigmoid_derivative(output):
+        """Derivada da função sigmoide."""
+        return output * (1 - output)
+
+# Camadas da rede neural
+class NeuralLayer:
+    def __init__(self, n_input, n_neurons, seed=0):
+        """Inicializa os pesos e vieses de maneira determinística."""
+        self.weights = [[self.deterministic_value(i, j) for j in range(n_neurons)] for i in range(n_input)]
+        self.biases = [self.deterministic_value(i) for i in range(n_neurons)]
+    
+    def deterministic_value(self, i, j=None):
+        """Função determinística para inicialização de pesos e vieses."""
+        result = 0.1  # Valor base
+        if j is not None:
+            result *= (i + 1) * (j + 1) * 0.5  # Para pesos, consideramos dois parâmetros (i, j)
+        else:
+            result *= (i + 1) * 0.5  # Para vieses, apenas o índice do neurônio
+        return result
+    
+    def forward(self, inputs):
+        """Propagação para frente (forward pass)."""
+        self.inputs = inputs
+        weighted_sum = matmul(inputs, self.weights)
+        self.output = [[ActivationFunctions.sigmoid(weighted_sum[i][j] + self.biases[j]) for j in range(len(self.biases))] for i in range(len(weighted_sum))]
+        return self.output
+
+    def backward(self, d_output, learning_rate):
+        """Propagação para trás (backward pass)."""
+        d_activation = [[ActivationFunctions.sigmoid_derivative(self.output[i][j]) * d_output[i][j] for j in range(len(d_output[0]))] for i in range(len(d_output))]
+        d_weights = matmul(transpose(self.inputs), d_activation)
+        
+        # Atualização dos pesos
+        for i in range(len(self.weights)):
+            for j in range(len(self.weights[0])):
+                self.weights[i][j] -= learning_rate * d_weights[i][j]
+        
+        # Atualização dos vieses
+        for i in range(len(self.biases)):
+            self.biases[i] -= learning_rate * sum([d_activation[j][i] for j in range(len(d_activation))])
+        
+        return matmul(d_activation, transpose(self.weights))
+
+# Rede Neural Principal
+class NeuralNetwork:
+    def __init__(self, layers):
+        """Inicializa a rede neural com as camadas fornecidas."""
+        self.layers = layers
+
+    def forward(self, X):
+        """Propagação para frente em todas as camadas."""
+        for layer in self.layers:
+            X = layer.forward(X)
+        return X
+
+    def backward(self, d_loss, learning_rate):
+        """Propagação para trás em todas as camadas."""
+        for layer in reversed(self.layers):
+            d_loss = layer.backward(d_loss, learning_rate)
+
+    def train(self, X, y, epochs, learning_rate):
+        """Treina a rede neural."""
+        for epoch in range(epochs):
+            output = self.forward(X)
+            loss = sum([(y[i][0] - output[i][0]) ** 2 for i in range(len(y))]) / len(y)
+            print(f"Epoch {epoch+1}/{epochs}, Loss: {loss}")
+
+            d_loss = [[2 * (output[i][0] - y[i][0]) / len(y) for _ in range(len(output[0]))] for i in range(len(output))]
+            self.backward(d_loss, learning_rate)
+
+    def save_model(self, path):
+        """Salva o modelo em um arquivo."""
+        with open(path, 'w') as f:
+            for layer in self.layers:
+                f.write(f"Weights: {layer.weights}\n")
+                f.write(f"Biases: {layer.biases}\n")
+
+# Dados de exemplo (XOR)
+X = [[0, 0], [0, 1], [1, 0], [1, 1]]
+y = [[0], [1], [1], [0]]
+
+# Definir a estrutura da rede
+layers = [
+    NeuralLayer(2, 3),
+    NeuralLayer(3, 1)
+]
+
+# Inicializar e treinar a rede
+nn = NeuralNetwork(layers)
+nn.train(X, y, epochs=1000, learning_rate=0.1)
+
+# Salvar o modelo no Google Drive
+model_path = os.path.join(save_path, 'modelo_rede_neural.txt')
+nn.save_model(model_path)
+print(f"Modelo salvo em: {model_path}")
+
+# Interface de conversa com a IA
+def conversar_com_ia():
+    """Interface de conversa com a IA."""
+    print("Digite dois valores binários separados por espaço (por exemplo, '1 0') ou 'sair' para encerrar:")
+    while True:
+        entrada = input("Entrada: ")
+        if entrada.lower() in ('sair', 'exit'):
+            break
+        try:
+            valores = [[int(x) for x in entrada.split()]]
+            resposta = nn.forward(valores)
+            print(f"Resposta da IA: {resposta[0][0]}")
+        except:
+            print("Entrada inválida. Tente novamente.")
+
+# Chamar a função de conversa
+conversar_com_ia()
+```
+
+### Melhorias realizadas:
+1. **Legibilidade**: Adicionei comentários explicativos para cada função e método, facilitando o entendimento do código.
+2. **Eficiência**: Simplifiquei a função `matmul` usando list comprehensions e a função `zip` para melhorar a eficiência.
+3. **Boas práticas**: Utilizei métodos estáticos para as funções de ativação, evitando a necessidade de instanciar a classe `ActivationFunctions`.
+4. **Tratamento de erros**: Adicionei um bloco `try-except` na função de conversa para lidar com entradas inválidas.
+5. **Organização**: Mantive a estrutura original, mas reorganizei o código para facilitar a leitura e a manutenção.
+
+propriedade intelectual do autor.
